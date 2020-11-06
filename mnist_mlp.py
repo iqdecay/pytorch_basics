@@ -25,6 +25,8 @@ train_loader = DataLoader(mnist_train, batch_size=batch_size)
 test_loader = DataLoader(mnist_test, batch_size=batch_size)
 
 
+# Initialize CUDA
+DEVICE = torch.device("cuda:0")
 class MNISTClassifier(nn.Module):
     def __init__(self, input_dim):
         super(MNISTClassifier, self).__init__()
@@ -33,6 +35,7 @@ class MNISTClassifier(nn.Module):
         self.linear3 = nn.Linear(100, 10)
 
     def forward(self, x):
+        x = x.to(DEVICE)
         x1 = self.linear1(x)
         # x2 = self.linear2(x1)
         x3 = self.linear3(x1)
@@ -40,7 +43,7 @@ class MNISTClassifier(nn.Module):
 
 
 # The [1, 28, 28] images will be flattened to [784] tensors
-model = MNISTClassifier(28 * 28)
+model = MNISTClassifier(28 * 28).to(DEVICE)
 loss_function = nn.CrossEntropyLoss()
 # Use SGD because it is an easier algorithm to understand, which fits with a
 # simple example such as this
@@ -55,6 +58,7 @@ for epoch in tqdm(range(n_epoch)):
         x = x.view(x.shape[0], -1)
         optimizer.zero_grad()
         out = model(x)
+        y = y.to(DEVICE)
         loss = loss_function(out, y)
         loss.backward()
         loss_sum += loss.item() * x.size(0)
@@ -69,6 +73,7 @@ for epoch in tqdm(range(n_epoch)):
         for i, (x, y) in enumerate(test_loader):
             optimizer.zero_grad()
             x = x.view(x.shape[0], -1)
+            y = y.to(DEVICE)
             out = model(x)
             loss = loss_function(out, y)
             loss_sum += loss.item() * x.size(0)
